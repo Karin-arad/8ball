@@ -579,19 +579,38 @@
       let noSensorTimer = null;
 
       // ========== SHAKE DETECTION ==========
-      const SHAKE_THRESHOLD = 12;
-      const SHAKE_COUNT = 2;
-      const SHAKE_WINDOW = 500;
+      const SHAKE_THRESHOLD = 8;
+      const SHAKE_WINDOW = 600;
       const COOLDOWN_MS = 2000;
+      let lastX = 0, lastY = 0, lastZ = 0;
+      let lastMotionTime = 0;
 
       function handleMotion(event) {
         if (cooldown || isShaking) return;
 
-        const acc = event.accelerationIncludingGravity;
+        // Prefer acceleration (without gravity) if available
+        let acc = event.acceleration;
+        let useRaw = true;
+        if (!acc || acc.x == null) {
+          acc = event.accelerationIncludingGravity;
+          useRaw = false;
+        }
         if (!acc || acc.x == null) return;
 
-        const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
-        const netAccel = Math.abs(magnitude - 9.8);
+        let netAccel;
+        if (useRaw) {
+          // acceleration already excludes gravity
+          netAccel = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+        } else {
+          // Calculate delta from last reading to detect sudden movement
+          const deltaX = Math.abs(acc.x - lastX);
+          const deltaY = Math.abs(acc.y - lastY);
+          const deltaZ = Math.abs(acc.z - lastZ);
+          netAccel = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+          lastX = acc.x;
+          lastY = acc.y;
+          lastZ = acc.z;
+        }
 
         if (netAccel > SHAKE_THRESHOLD) {
           const now = Date.now();
@@ -602,7 +621,7 @@
             return now - t < SHAKE_WINDOW;
           });
 
-          if (shakeEvents.length >= SHAKE_COUNT) {
+          if (shakeEvents.length >= 2) {
             shakeEvents = [];
             hasShaken = true;
             triggerShake();
