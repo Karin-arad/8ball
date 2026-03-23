@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0d001a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="8Ball">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <title>8Ball</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background: linear-gradient(180deg, #0d001a 0%, #1a002e 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      position: relative;
+    }
+
+    /* ========== iOS PERMISSION SCREEN ========== */
+    #ios-permission {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: linear-gradient(180deg, #0d001a 0%, #1a002e 100%);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    #ios-permission.visible {
+      display: flex;
+    }
+
+    .permission-btn {
+      background: transparent;
+      border: 2px solid #ff00cc;
+      color: #ff00cc;
+      font-size: clamp(18px, 5vw, 24px);
+      padding: 14px 40px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 0 15px rgba(255, 0, 204, 0.4), 0 0 30px rgba(255, 0, 204, 0.15), inset 0 0 15px rgba(255, 0, 204, 0.1);
+      transition: box-shadow 0.3s, transform 0.2s;
+    }
+
+    .permission-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 25px rgba(255, 0, 204, 0.6), 0 0 50px rgba(255, 0, 204, 0.3), inset 0 0 20px rgba(255, 0, 204, 0.2);
+    }
+
+    .permission-text {
+      color: #888;
+      font-size: clamp(12px, 3vw, 14px);
+      text-align: center;
+      max-width: 260px;
+      line-height: 1.6;
+    }
+
+    /* ========== DESKTOP FALLBACK ========== */
+    #desktop-fallback {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: linear-gradient(180deg, #0d001a 0%, #1a002e 100%);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+
+    #desktop-fallback.visible {
+      display: flex;
+    }
+
+    .desktop-message {
+      font-size: clamp(18px, 4vw, 24px);
+      color: #ff00cc;
+      text-shadow: 0 0 10px #ff00cc, 0 0 30px rgba(255, 0, 200, 0.4);
+      text-align: center;
+    }
+
+    .desktop-sub {
+      color: #666;
+      font-size: clamp(12px, 3vw, 14px);
+      text-align: center;
+    }
+
+    .qr-placeholder {
+      width: 140px;
+      height: 140px;
+      border: 2px solid rgba(255, 0, 204, 0.3);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      font-size: 12px;
+    }
+
+    /* ========== MAIN APP ========== */
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 100dvh;
+      padding: 2rem 1rem;
+      gap: 0;
+    }
+
+    #app.hidden {
+      display: none;
+    }
+
+    /* ========== TITLE ========== */
+    .title {
+      font-size: clamp(42px, 12vw, 64px);
+      font-weight: 900;
+      color: #ff00cc;
+      text-shadow:
+        0 0 10px #ff00cc,
+        0 0 30px rgba(255, 0, 200, 0.5),
+        0 0 60px rgba(255, 0, 200, 0.2);
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+      animation: titleGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes titleGlow {
+      0% {
+        text-shadow:
+          0 0 10px #ff00cc,
+          0 0 30px rgba(255, 0, 200, 0.5),
+          0 0 60px rgba(255, 0, 200, 0.2);
+      }
+      100% {
+        text-shadow:
+          0 0 15px #ff00cc,
+          0 0 40px rgba(255, 0, 200, 0.6),
+          0 0 80px rgba(255, 0, 200, 0.3);
+      }
+    }
+
+    .subtitle {
+      font-size: clamp(12px, 3.5vw, 16px);
+      color: #777;
+      margin-bottom: clamp(24px, 6vh, 48px);
+      letter-spacing: 0.15em;
+    }
+
+    /* ========== CRYSTAL BALL ========== */
+    .ball-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .neon-ring {
+      position: relative;
+      width: calc(min(40vw, 160px) + 24px);
+      height: calc(min(40vw, 160px) + 24px);
+      border-radius: 50%;
+      border: 2px solid rgba(255, 0, 204, 0.4);
+      box-shadow:
+        0 0 15px rgba(255, 0, 204, 0.3),
+        0 0 30px rgba(255, 0, 204, 0.15),
+        inset 0 0 15px rgba(255, 0, 204, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 0.3s;
+    }
+
+    .crystal-ball {
+      width: min(40vw, 160px);
+      height: min(40vw, 160px);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(80, 50, 120, 0.6), rgba(20, 10, 40, 0.95) 70%);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* Glint */
+    .crystal-ball::before {
+      content: '';
+      position: absolute;
+      top: 12%;
+      left: 18%;
+      width: 30%;
+      height: 20%;
+      background: radial-gradient(ellipse, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(4px);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Fog layers */
+    .fog {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .fog-1 {
+      background: radial-gradient(ellipse at 40% 50%, rgba(180, 100, 255, 0.12) 0%, transparent 65%);
+      animation: fogDrift1 10s ease-in-out infinite alternate;
+    }
+
+    .fog-2 {
+      background: radial-gradient(ellipse at 60% 45%, rgba(100, 200, 255, 0.08) 0%, transparent 60%);
+      animation: fogDrift2 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes fogDrift1 {
+      0%   { transform: translate(-8px, 4px) scale(1); }
+      50%  { transform: translate(6px, -6px) scale(1.05); }
+      100% { transform: translate(-4px, 8px) scale(0.97); }
+    }
+
+    @keyframes fogDrift2 {
+      0%   { transform: translate(6px, -4px) scale(1.02); }
+      50%  { transform: translate(-8px, 6px) scale(0.96); }
+      100% { transform: translate(4px, -8px) scale(1.04); }
+    }
+
+    /* Answer text inside ball */
+    #answer-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 15%;
+      font-size: clamp(14px, 3.5vw, 18px);
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 0 8px rgba(180, 100, 255, 0.6), 0 0 20px rgba(123, 47, 255, 0.3);
+      z-index: 10;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+      line-height: 1.4;
+      pointer-events: none;
+    }
+
+    /* ========== STATES ========== */
+
+    /* Shaking state */
+    .shaking .crystal-ball {
+      animation: tremble 50ms linear infinite;
+    }
+
+    .shaking .fog-1 {
+      animation: fogSwirl1 1s ease-in-out infinite alternate;
+    }
+
+    .shaking .fog-2 {
+      animation: fogSwirl2 0.8s ease-in-out infinite alternate;
+    }
+
+    .shaking .neon-ring {
+      animation: neonPulse 0.3s ease-in-out infinite alternate;
+    }
+
+    @keyframes tremble {
+      0%   { transform: translate(0, 0) rotate(0deg); }
+      25%  { transform: translate(-2px, 1px) rotate(-0.5deg); }
+      50%  { transform: translate(2px, -1px) rotate(0.5deg); }
+      75%  { transform: translate(-1px, -2px) rotate(-0.5deg); }
+      100% { transform: translate(1px, 2px) rotate(0.5deg); }
+    }
+
+    @keyframes fogSwirl1 {
+      0%   { transform: translate(-5px, 5px) rotate(0deg) scale(1.1); opacity: 0.2; }
+      100% { transform: translate(5px, -5px) rotate(180deg) scale(0.9); opacity: 0.3; }
+    }
+
+    @keyframes fogSwirl2 {
+      0%   { transform: translate(5px, -5px) rotate(0deg) scale(0.9); opacity: 0.15; }
+      100% { transform: translate(-5px, 5px) rotate(-180deg) scale(1.1); opacity: 0.25; }
+    }
+
+    @keyframes neonPulse {
+      0% {
+        box-shadow:
+          0 0 15px rgba(255, 0, 204, 0.3),
+          0 0 30px rgba(255, 0, 204, 0.15),
+          inset 0 0 15px rgba(255, 0, 204, 0.1);
+      }
+      100% {
+        box-shadow:
+          0 0 30px rgba(255, 0, 204, 0.7),
+          0 0 60px rgba(255, 0, 204, 0.4),
+          0 0 90px rgba(255, 0, 204, 0.2),
+          inset 0 0 25px rgba(255, 0, 204, 0.25);
+      }
+    }
+
+    /* Reveal state */
+    .reveal .fog-1,
+    .reveal .fog-2 {
+      opacity: 0.03;
+      transition: opacity 0.6s ease-out;
+    }
+
+    .reveal #answer-text {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ========== INSTRUCTION TEXT ========== */
+    .instruction {
+      margin-top: clamp(20px, 5vh, 40px);
+      font-size: clamp(16px, 4.5vw, 20px);
+      color: #00d4ff;
+      text-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 20px rgba(0, 212, 255, 0.2);
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .instruction-sub {
+      margin-top: 8px;
+      font-size: clamp(11px, 3vw, 13px);
+      color: #555;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    #no-sensor-hint {
+      display: none;
+      margin-top: 12px;
+      font-size: clamp(11px, 3vw, 13px);
+      color: #666;
+      text-align: center;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    #no-sensor-hint.visible {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ========== DECORATIVE ========== */
+    .neon-line {
+      margin-top: clamp(28px, 6vh, 48px);
+      width: min(80%, 280px);
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #ff00cc, #7b2fff, #00d4ff, transparent);
+      box-shadow: 0 0 8px rgba(255, 0, 204, 0.3), 0 0 16px rgba(123, 47, 255, 0.2);
+      border-radius: 1px;
+    }
+
+    .dots {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .dot:nth-child(1) {
+      background: #ff00cc;
+      box-shadow: 0 0 6px #ff00cc;
+    }
+
+    .dot:nth-child(2) {
+      background: #7b2fff;
+      box-shadow: 0 0 6px #7b2fff;
+    }
+
+    .dot:nth-child(3) {
+      background: #00d4ff;
+      box-shadow: 0 0 6px #00d4ff;
+    }
+
+    /* ========== REDUCED MOTION ========== */
+    @media (prefers-reduced-motion: reduce) {
+      .fog-1, .fog-2 {
+        animation: none !important;
+      }
+
+      .shaking .crystal-ball {
+        animation: none !important;
+      }
+
+      .shaking .neon-ring {
+        animation: none !important;
+      }
+
+      .title {
+        animation: none !important;
+      }
+
+      .reveal #answer-text {
+        transition: opacity 0.8s ease-out;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- iOS Permission Screen -->
+  <div id="ios-permission">
+    <div class="title" style="font-size: clamp(36px, 10vw, 52px);">8BALL</div>
+    <button class="permission-btn" id="permission-btn">&#x2728; להתחיל</button>
+    <p class="permission-text">צריך אישור לחיישן התנועה כדי לזהות ניעור</p>
+  </div>
+
+  <!-- Desktop Fallback -->
+  <div id="desktop-fallback">
+    <div class="title" style="font-size: clamp(36px, 10vw, 52px);">8BALL</div>
+    <p class="desktop-message">הכדור עובד רק בטלפון</p>
+    <div class="qr-placeholder">QR</div>
+    <p class="desktop-sub">סרקו את הקוד או פתחו בטלפון</p>
+  </div>
+
+  <!-- Main App -->
+  <div id="app">
+    <div id="idle">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;">
+
+        <!-- Title -->
+        <h1 class="title">8BALL</h1>
+        <p class="subtitle">לשאול. לנער. לגלות.</p>
+
+        <!-- Crystal Ball -->
+        <div class="ball-container">
+          <div class="neon-ring">
+            <div class="crystal-ball" id="crystal-ball">
+              <div class="fog fog-1"></div>
+              <div class="fog fog-2"></div>
+              <div id="answer-text"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instruction -->
+        <p class="instruction" id="instruction-text">לנער חזק ולשאול בלב</p>
+        <p class="instruction-sub" id="instruction-sub">חשבו על שאלה ותנו לכדור לענות</p>
+        <p id="no-sensor-hint">אפשר גם פשוט ללחוץ על הכדור</p>
+
+        <!-- Decorative -->
+        <div class="neon-line"></div>
+        <div class="dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ========== ANSWER POOL ==========
+      const answers = [
+        // Positive (~30%)
+        'כן',
+        'בהחלט כן',
+        'הכוכבים אומרים כן',
+        'בלי שום ספק',
+        'זה הולך לקרות',
+        'אפשר לסמוך על זה',
+        'בדרך אליך',
+        'ללא ספק',
+        'חד משמעית כן',
+        'התשובה חיובית',
+        'סימנים טובים',
+        'יותר כן מלא',
+        'הכל מצביע על כן',
+        'בהחלט',
+        'אני הייתי הולך על זה',
+        // Negative (~20%)
+        'לא',
+        'ממש לא',
+        'לא בחיים האלה',
+        'בגלגול הבא אולי',
+        'תשכחו מזה',
+        'הכוכבים צוחקים',
+        'לא הפעם',
+        'שלילי לגמרי',
+        'אפילו לא שווה לנסות',
+        'חד משמעית לא',
+        // Evasive (~25%)
+        'אולי מחר',
+        'צריך לחשוב שוב',
+        'שאלתם את אמא?',
+        'הרוחות שותקות',
+        'לא עכשיו',
+        'תנערו שוב, לא שמעתי',
+        'הערפל כבד מדי',
+        'לשאול שוב מאוחר יותר',
+        'לא ברור עדיין',
+        'ממממ... לא בטוח',
+        'קשה להגיד',
+        'תחזרו מחר',
+        'יכול להיות שכן ויכול להיות שלא',
+        // Philosophical/Cheeky (~25%)
+        'התשובה כבר ידועה, לא?',
+        'מספיק לשאול. הגיע הזמן לבצע',
+        'התשובה בפנים, לא בכדור',
+        'למה לשאול אותי? תסתכלו במראה',
+        'אם צריך לשאול, כנראה כן',
+        'תפסיקו לשאול ותתחילו לעשות',
+        'שאלה טובה. תשובה? לא בטוח',
+        'הלב יודע. הכדור רק מאשר',
+        'אין תשובות קלות לשאלות טובות',
+        'הכדור לא יודע הכל, אבל יודע את זה',
+        'תנסו ותראו',
+        'מי שלא מנסה לא יודע',
+        'זה תלוי רק בך'
+      ];
+
+      // ========== DOM ELEMENTS ==========
+      const appEl = document.getElementById('app');
+      const idleEl = document.getElementById('idle');
+      const iosPermEl = document.getElementById('ios-permission');
+      const desktopEl = document.getElementById('desktop-fallback');
+      const permBtn = document.getElementById('permission-btn');
+      const crystalBall = document.getElementById('crystal-ball');
+      const answerText = document.getElementById('answer-text');
+      const instructionText = document.getElementById('instruction-text');
+      const instructionSub = document.getElementById('instruction-sub');
+      const noSensorHint = document.getElementById('no-sensor-hint');
+      const ballContainer = document.querySelector('.ball-container');
+
+      // ========== STATE ==========
+      let lastAnswerIndex = -1;
+      let isShaking = false;
+      let cooldown = false;
+      let shakeEvents = [];
+      let hasShaken = false;
+      let tapFallbackEnabled = false;
+      let noSensorTimer = null;
+
+      // ========== SHAKE DETECTION ==========
+      const SHAKE_THRESHOLD = 12;
+      const SHAKE_COUNT = 2;
+      const SHAKE_WINDOW = 500;
+      const COOLDOWN_MS = 2000;
+
+      function handleMotion(event) {
+        if (cooldown || isShaking) return;
+
+        const acc = event.accelerationIncludingGravity;
+        if (!acc || acc.x == null) return;
+
+        const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+        const netAccel = Math.abs(magnitude - 9.8);
+
+        if (netAccel > SHAKE_THRESHOLD) {
+          const now = Date.now();
+          shakeEvents.push(now);
+
+          // Keep only events within the window
+          shakeEvents = shakeEvents.filter(function (t) {
+            return now - t < SHAKE_WINDOW;
+          });
+
+          if (shakeEvents.length >= SHAKE_COUNT) {
+            shakeEvents = [];
+            hasShaken = true;
+            triggerShake();
+          }
+        }
+      }
+
+      function startListening() {
+        window.addEventListener('devicemotion', handleMotion, { passive: true });
+
+        // Start no-sensor fallback timer
+        noSensorTimer = setTimeout(function () {
+          if (!hasShaken && !tapFallbackEnabled) {
+            enableTapFallback();
+            noSensorHint.classList.add('visible');
+          }
+        }, 10000);
+      }
+
+      // ========== TRIGGER SHAKE ==========
+      function triggerShake() {
+        if (isShaking) return;
+        isShaking = true;
+        cooldown = true;
+
+        // Clear any previous reveal
+        ballContainer.classList.remove('reveal');
+        answerText.style.opacity = '0';
+        answerText.style.transform = 'translateY(10px)';
+
+        // Add shaking class
+        ballContainer.classList.add('shaking');
+
+        // After 1.5s, stop shaking and reveal answer
+        setTimeout(function () {
+          ballContainer.classList.remove('shaking');
+          showAnswer();
+          isShaking = false;
+        }, 1500);
+
+        // Cooldown
+        setTimeout(function () {
+          cooldown = false;
+        }, COOLDOWN_MS);
+      }
+
+      // ========== SHOW ANSWER ==========
+      function showAnswer() {
+        let index;
+        do {
+          index = Math.floor(Math.random() * answers.length);
+        } while (index === lastAnswerIndex && answers.length > 1);
+
+        lastAnswerIndex = index;
+        answerText.textContent = answers[index];
+
+        // Remove inline styles so CSS transition takes effect
+        answerText.style.opacity = '';
+        answerText.style.transform = '';
+
+        // Trigger reveal
+        requestAnimationFrame(function () {
+          ballContainer.classList.add('reveal');
+        });
+
+        // Update instruction text
+        instructionText.textContent = 'לנער שוב לשאלה חדשה';
+        instructionSub.textContent = '';
+      }
+
+      // ========== TAP FALLBACK ==========
+      function enableTapFallback() {
+        if (tapFallbackEnabled) return;
+        tapFallbackEnabled = true;
+
+        crystalBall.addEventListener('click', function () {
+          if (!isShaking && !cooldown) {
+            triggerShake();
+          }
+        });
+      }
+
+      // ========== iOS PERMISSION ==========
+      function handleiOSPermission() {
+        if (typeof DeviceMotionEvent !== 'undefined' &&
+            typeof DeviceMotionEvent.requestPermission === 'function') {
+          // iOS 13+ — need permission
+          iosPermEl.classList.add('visible');
+          appEl.classList.add('hidden');
+
+          permBtn.addEventListener('click', function () {
+            DeviceMotionEvent.requestPermission().then(function (state) {
+              if (state === 'granted') {
+                iosPermEl.classList.remove('visible');
+                appEl.classList.remove('hidden');
+                startListening();
+              } else {
+                // Permission denied — show app with tap fallback
+                iosPermEl.classList.remove('visible');
+                appEl.classList.remove('hidden');
+                enableTapFallback();
+                noSensorHint.classList.add('visible');
+                noSensorHint.textContent = 'אין גישה לחיישן? לחצו על הכדור';
+              }
+            }).catch(function () {
+              // Error — fallback to tap
+              iosPermEl.classList.remove('visible');
+              appEl.classList.remove('hidden');
+              enableTapFallback();
+              noSensorHint.classList.add('visible');
+              noSensorHint.textContent = 'אין גישה לחיישן? לחצו על הכדור';
+            });
+          });
+        } else if (typeof DeviceMotionEvent === 'undefined') {
+          // No DeviceMotionEvent at all — desktop
+          appEl.classList.add('hidden');
+          desktopEl.classList.add('visible');
+        } else {
+          // Android or older iOS — no permission needed
+          startListening();
+          // Also enable tap fallback just in case
+          enableTapFallback();
+        }
+      }
+
+      // ========== INIT ==========
+      handleiOSPermission();
+
+      // ========== SERVICE WORKER ==========
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(function () {
+          // SW registration failed — app still works
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
