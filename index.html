@@ -360,6 +360,27 @@
       line-height: 1.5;
     }
 
+    /* ========== INSTALL BUTTON ========== */
+    .install-btn {
+      margin-top: clamp(16px, 4vh, 28px);
+      background: transparent;
+      border: 1.5px solid rgba(0, 212, 255, 0.5);
+      color: #00d4ff;
+      font-size: clamp(13px, 3.5vw, 16px);
+      padding: 10px 28px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.2), 0 0 20px rgba(0, 212, 255, 0.1);
+      transition: box-shadow 0.3s, transform 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .install-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(0, 212, 255, 0.2);
+    }
+
     #no-sensor-hint {
       display: none;
       margin-top: 12px;
@@ -481,6 +502,9 @@
         <p class="instruction" id="instruction-text">לנער חזק ולשאול בלב</p>
         <p class="instruction-sub" id="instruction-sub">חשבו על שאלה ותנו לכדור לענות</p>
         <p id="no-sensor-hint">אפשר גם פשוט ללחוץ על הכדור</p>
+
+        <!-- Install button -->
+        <button class="install-btn" id="install-btn" style="display:none;">הוסיפו למסך הבית 📲</button>
 
         <!-- Decorative -->
         <div class="neon-line"></div>
@@ -746,6 +770,62 @@
           enableTapFallback();
         }
       }
+
+      // ========== INSTALL PROMPT ==========
+      const installBtn = document.getElementById('install-btn');
+      let deferredPrompt = null;
+
+      // Android / Chrome — intercept beforeinstallprompt
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'inline-block';
+      });
+
+      installBtn.addEventListener('click', function () {
+        if (deferredPrompt) {
+          // Android/Chrome native install
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () {
+            deferredPrompt = null;
+            installBtn.style.display = 'none';
+          });
+        } else {
+          // iOS — show manual instructions
+          showIOSInstallGuide();
+        }
+      });
+
+      function showIOSInstallGuide() {
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(13,0,26,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;padding:2rem;';
+        overlay.innerHTML =
+          '<p style="font-size:20px;color:#ff00cc;text-shadow:0 0 10px #ff00cc;">הוסיפו למסך הבית</p>' +
+          '<p style="font-size:15px;color:#ccc;text-align:center;line-height:1.8;">' +
+          '1. לחצו על כפתור השיתוף <span style="font-size:20px;">⬆️</span><br>' +
+          '2. גללו למטה ובחרו<br><strong style="color:#00d4ff;">Add to Home Screen</strong><br>' +
+          '3. לחצו <strong style="color:#00d4ff;">Add</strong></p>' +
+          '<button style="margin-top:12px;background:transparent;border:1.5px solid #ff00cc;color:#ff00cc;padding:10px 32px;border-radius:50px;font-size:15px;cursor:pointer;font-family:inherit;" onclick="this.parentElement.remove()">הבנתי 👍</button>';
+        document.body.appendChild(overlay);
+      }
+
+      // iOS — detect standalone mode. If not installed, show install button
+      function isIOS() {
+        return /iPhone|iPad|iPod/.test(navigator.userAgent);
+      }
+
+      function isStandalone() {
+        return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+      }
+
+      if (isIOS() && !isStandalone()) {
+        installBtn.style.display = 'inline-block';
+      }
+
+      // Hide after install
+      window.addEventListener('appinstalled', function () {
+        installBtn.style.display = 'none';
+      });
 
       // ========== INIT ==========
       handleiOSPermission();
