@@ -2,15 +2,72 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d001a">
+  <meta name="description" content="כדור בדולח דיגיטלי. לשאול בלב, לנער, ולקבל תשובה.">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="8Ball">
   <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="8Ball">
+  <meta property="og:description" content="כדור בדולח דיגיטלי. לשאול בלב, לנער, ולקבל תשובה.">
+  <meta property="og:url" content="https://8ball-five.vercel.app/">
+  <meta property="og:image" content="https://8ball-five.vercel.app/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="he_IL">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://8ball-five.vercel.app/og.png">
+  <link rel="preload" href="/fonts/rubik-hebrew-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <title>8Ball</title>
   <style>
+    /* ========== FONT (self hosted, works offline) ========== */
+    @font-face {
+      font-family: 'Rubik';
+      font-style: normal;
+      font-weight: 300 900;
+      font-display: swap;
+      src: url('/fonts/rubik-hebrew-wght-normal.woff2') format('woff2');
+      unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+    }
+
+    @font-face {
+      font-family: 'Rubik';
+      font-style: normal;
+      font-weight: 300 900;
+      font-display: swap;
+      src: url('/fonts/rubik-latin-wght-normal.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    /* ========== TOKENS ========== */
+    :root {
+      --bg-top: #0d001a;
+      --bg-bottom: #1a002e;
+      --pink: #ff00cc;
+      --violet: #9b5cff;
+      --cyan: #00d4ff;
+      --text: #ffffff;
+      --muted: #b9a8d6;
+
+      /* four text sizes, no more */
+      --t-title: clamp(40px, 11vw, 60px);
+      --t-answer: clamp(18px, 5.4vw, 26px);
+      --t-body: clamp(17px, 4.6vw, 20px);
+      --t-small: clamp(13px, 3.6vw, 15px);
+
+      --ball: min(68vw, 42dvh, 340px);
+      --ring-gap: 14px;
+
+      /* the colour of the current answer; pink until there is one */
+      --tone: var(--pink);
+      --tone-rgb: 255, 0, 204;
+    }
+
     *, *::before, *::after {
       margin: 0;
       padding: 0;
@@ -28,189 +85,150 @@
     }
 
     body {
-      background: linear-gradient(180deg, #0d001a 0%, #1a002e 100%);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100dvh;
-      position: relative;
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ========== iOS PERMISSION SCREEN ========== */
-    #ios-permission {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: linear-gradient(180deg, #0d001a 0%, #1a002e 100%);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2rem;
-    }
-
-    #ios-permission.visible {
-      display: flex;
-    }
-
-    .permission-btn {
-      background: transparent;
-      border: 2px solid #ff00cc;
-      color: #ff00cc;
-      font-size: clamp(18px, 5vw, 24px);
-      padding: 14px 40px;
-      border-radius: 50px;
-      cursor: pointer;
-      font-family: inherit;
-      box-shadow: 0 0 15px rgba(255, 0, 204, 0.4), 0 0 30px rgba(255, 0, 204, 0.15), inset 0 0 15px rgba(255, 0, 204, 0.1);
-      transition: box-shadow 0.3s, transform 0.2s;
-    }
-
-    .permission-btn:active {
-      transform: scale(0.95);
-      box-shadow: 0 0 25px rgba(255, 0, 204, 0.6), 0 0 50px rgba(255, 0, 204, 0.3), inset 0 0 20px rgba(255, 0, 204, 0.2);
-    }
-
-    .permission-text {
-      color: #888;
-      font-size: clamp(12px, 3vw, 14px);
-      text-align: center;
-      max-width: 260px;
-      line-height: 1.6;
-    }
-
-    /* ========== DESKTOP FALLBACK ========== */
-    #desktop-fallback {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: linear-gradient(180deg, #0d001a 0%, #1a002e 100%);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1.5rem;
-    }
-
-    #desktop-fallback.visible {
-      display: flex;
-    }
-
-    .desktop-message {
-      font-size: clamp(18px, 4vw, 24px);
-      color: #ff00cc;
-      text-shadow: 0 0 10px #ff00cc, 0 0 30px rgba(255, 0, 200, 0.4);
-      text-align: center;
-    }
-
-    .desktop-sub {
-      color: #666;
-      font-size: clamp(12px, 3vw, 14px);
-      text-align: center;
-    }
-
-    .qr-placeholder {
-      width: 140px;
-      height: 140px;
-      border: 2px solid rgba(255, 0, 204, 0.3);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #555;
-      font-size: 12px;
-    }
-
-    /* ========== MAIN APP ========== */
+    /* ========== SKELETON: header / ball / footer ========== */
     #app {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: 100dvh;
-      padding: 2rem 1rem;
-      gap: 0;
-    }
-
-    #app.hidden {
-      display: none;
+      height: 100dvh;
+      max-width: 560px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      justify-items: center;
+      padding:
+        calc(env(safe-area-inset-top, 0px) + clamp(24px, 6dvh, 56px))
+        24px
+        calc(env(safe-area-inset-bottom, 0px) + clamp(20px, 4dvh, 40px));
+      text-align: center;
     }
 
     /* ========== TITLE ========== */
     .title {
-      font-size: clamp(42px, 12vw, 64px);
+      font-size: var(--t-title);
       font-weight: 900;
-      color: #ff00cc;
+      line-height: 1;
+      color: var(--pink);
+      letter-spacing: 0.08em;
       text-shadow:
-        0 0 10px #ff00cc,
-        0 0 30px rgba(255, 0, 200, 0.5),
-        0 0 60px rgba(255, 0, 200, 0.2);
-      letter-spacing: 0.1em;
-      margin-bottom: 4px;
+        0 0 10px var(--pink),
+        0 0 30px rgba(255, 0, 204, 0.5),
+        0 0 60px rgba(255, 0, 204, 0.2);
       animation: titleGlow 3s ease-in-out infinite alternate;
+      direction: ltr;
     }
 
     @keyframes titleGlow {
-      0% {
-        text-shadow:
-          0 0 10px #ff00cc,
-          0 0 30px rgba(255, 0, 200, 0.5),
-          0 0 60px rgba(255, 0, 200, 0.2);
-      }
-      100% {
-        text-shadow:
-          0 0 15px #ff00cc,
-          0 0 40px rgba(255, 0, 200, 0.6),
-          0 0 80px rgba(255, 0, 200, 0.3);
-      }
+      from { text-shadow: 0 0 10px var(--pink), 0 0 30px rgba(255, 0, 204, 0.5), 0 0 60px rgba(255, 0, 204, 0.2); }
+      to   { text-shadow: 0 0 15px var(--pink), 0 0 40px rgba(255, 0, 204, 0.6), 0 0 80px rgba(255, 0, 204, 0.3); }
     }
 
     .subtitle {
-      font-size: clamp(12px, 3.5vw, 16px);
-      color: #777;
-      margin-bottom: clamp(24px, 6vh, 48px);
-      letter-spacing: 0.15em;
+      margin-top: 10px;
+      font-size: var(--t-small);
+      color: var(--muted);
     }
 
-    /* ========== CRYSTAL BALL ========== */
-    .ball-container {
+    /* ========== STAGE ========== */
+    .stage {
       position: relative;
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 0;
+    }
+
+    .ball-container {
+      position: relative;
+      animation: float 5.5s ease-in-out infinite alternate;
+    }
+
+    /* soft light behind the ball, takes the colour of the answer */
+    .ball-container::before {
+      content: '';
+      position: absolute;
+      inset: -45%;
+      z-index: -1;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(var(--tone-rgb), 0.17) 0%, transparent 62%);
+      pointer-events: none;
+    }
+
+    @keyframes float {
+      from { transform: translateY(5px); }
+      to   { transform: translateY(-7px); }
     }
 
     .neon-ring {
-      position: relative;
-      width: calc(min(40vw, 160px) + 24px);
-      height: calc(min(40vw, 160px) + 24px);
+      width: calc(var(--ball) + var(--ring-gap) * 2);
+      height: calc(var(--ball) + var(--ring-gap) * 2);
       border-radius: 50%;
-      border: 2px solid rgba(255, 0, 204, 0.4);
+      border: 2px solid rgba(var(--tone-rgb), 0.55);
       box-shadow:
-        0 0 15px rgba(255, 0, 204, 0.3),
-        0 0 30px rgba(255, 0, 204, 0.15),
-        inset 0 0 15px rgba(255, 0, 204, 0.1);
+        0 0 18px rgba(var(--tone-rgb), 0.35),
+        0 0 40px rgba(var(--tone-rgb), 0.18),
+        inset 0 0 18px rgba(var(--tone-rgb), 0.12);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: box-shadow 0.3s;
+      transition: box-shadow 0.5s, border-color 0.5s;
+    }
+
+    /* before the first answer the ball gives a little "shake me" wiggle */
+    .fresh .neon-ring {
+      animation: nudge 6s ease-in-out 2.5s infinite;
+    }
+
+    @keyframes nudge {
+      0%, 84%, 100% { transform: rotate(0deg) translateX(0); }
+      87% { transform: rotate(-5deg) translateX(-6px); }
+      90% { transform: rotate(5deg) translateX(6px); }
+      93% { transform: rotate(-3deg) translateX(-4px); }
+      96% { transform: rotate(2deg) translateX(2px); }
     }
 
     .crystal-ball {
-      width: min(40vw, 160px);
-      height: min(40vw, 160px);
+      appearance: none;
+      -webkit-appearance: none;
+      border: 0;
+      font: inherit;
+      color: inherit;
+      width: var(--ball);
+      height: var(--ball);
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, rgba(80, 50, 120, 0.6), rgba(20, 10, 40, 0.95) 70%);
+      background: radial-gradient(circle at 35% 30%, rgba(96, 60, 150, 0.7), rgba(20, 10, 40, 0.96) 70%);
       position: relative;
       overflow: hidden;
       cursor: pointer;
       flex-shrink: 0;
+      container-type: size;
+      transition: transform 0.2s;
     }
 
-    /* Glint */
+    .crystal-ball:active {
+      transform: scale(0.97);
+    }
+
+    .crystal-ball:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: calc(var(--ring-gap) + 6px);
+    }
+
+    @media (hover: hover) {
+      .ball-container:hover .neon-ring {
+        border-color: rgba(var(--tone-rgb), 0.9);
+        box-shadow:
+          0 0 26px rgba(var(--tone-rgb), 0.55),
+          0 0 60px rgba(var(--tone-rgb), 0.3),
+          inset 0 0 22px rgba(var(--tone-rgb), 0.2);
+      }
+    }
+
+    /* glint */
     .crystal-ball::before {
       content: '';
       position: absolute;
@@ -218,45 +236,178 @@
       left: 18%;
       width: 30%;
       height: 20%;
-      background: radial-gradient(ellipse, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+      background: radial-gradient(ellipse, rgba(255, 255, 255, 0.28) 0%, transparent 70%);
       border-radius: 50%;
-      filter: blur(4px);
+      filter: blur(5px);
       pointer-events: none;
-      z-index: 5;
+      z-index: 7;
     }
 
-    /* Fog layers */
+    /* fog */
     .fog {
       position: absolute;
-      inset: 0;
+      inset: -10%;
       border-radius: 50%;
       pointer-events: none;
       z-index: 2;
+      filter: blur(6px);
+      transition: opacity 0.8s ease-out;
     }
 
     .fog-1 {
-      background: radial-gradient(ellipse at 40% 50%, rgba(180, 100, 255, 0.12) 0%, transparent 65%);
+      background: radial-gradient(ellipse at 38% 55%, rgba(180, 100, 255, 0.34) 0%, transparent 60%);
       animation: fogDrift1 10s ease-in-out infinite alternate;
     }
 
     .fog-2 {
-      background: radial-gradient(ellipse at 60% 45%, rgba(100, 200, 255, 0.08) 0%, transparent 60%);
+      background: radial-gradient(ellipse at 64% 42%, rgba(0, 212, 255, 0.2) 0%, transparent 55%);
       animation: fogDrift2 8s ease-in-out infinite alternate;
     }
 
+    .fog-3 {
+      background: radial-gradient(ellipse at 50% 72%, rgba(255, 0, 204, 0.18) 0%, transparent 50%);
+      animation: fogDrift1 13s ease-in-out infinite alternate-reverse;
+    }
+
     @keyframes fogDrift1 {
-      0%   { transform: translate(-8px, 4px) scale(1); }
-      50%  { transform: translate(6px, -6px) scale(1.05); }
-      100% { transform: translate(-4px, 8px) scale(0.97); }
+      0%   { transform: translate(-8%, 4%) scale(1); }
+      50%  { transform: translate(6%, -6%) scale(1.08); }
+      100% { transform: translate(-4%, 8%) scale(0.95); }
     }
 
     @keyframes fogDrift2 {
-      0%   { transform: translate(6px, -4px) scale(1.02); }
-      50%  { transform: translate(-8px, 6px) scale(0.96); }
-      100% { transform: translate(4px, -8px) scale(1.04); }
+      0%   { transform: translate(6%, -4%) scale(1.04); }
+      50%  { transform: translate(-8%, 6%) scale(0.94); }
+      100% { transform: translate(4%, -8%) scale(1.06); }
     }
 
-    /* Answer text inside ball */
+    /* ========== THE EYE ========== */
+    .eye {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .iris {
+      width: 50%;
+      height: 50%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #9ff0ff 0%, #00d4ff 26%, #7b2fff 62%, #2a0f55 100%);
+      box-shadow: 0 0 24px rgba(0, 212, 255, 0.55), 0 0 60px rgba(123, 47, 255, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: look 8s ease-in-out infinite;
+      transition: opacity 0.5s;
+    }
+
+    .pupil {
+      position: relative;
+      width: 42%;
+      height: 42%;
+      border-radius: 50%;
+      background: #0d001a;
+      transition: transform 0.3s;
+    }
+
+    .pupil::after {
+      content: '';
+      position: absolute;
+      top: 16%;
+      left: 20%;
+      width: 25%;
+      height: 25%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    /* idle: looks around */
+    @keyframes look {
+      0%, 18%   { transform: translate(0, 0); }
+      28%, 44%  { transform: translate(-18%, 5%); }
+      54%, 70%  { transform: translate(17%, -7%); }
+      80%, 100% { transform: translate(0, 0); }
+    }
+
+    /* shaking: startled, the pupil darts around */
+    .shaking .iris { animation: dart 0.36s linear infinite; }
+    .shaking .pupil { transform: scale(1.25); }
+
+    @keyframes dart {
+      0%   { transform: translate(-22%, -10%); }
+      25%  { transform: translate(20%, 12%); }
+      50%  { transform: translate(-10%, 18%); }
+      75%  { transform: translate(16%, -16%); }
+      100% { transform: translate(-22%, -10%); }
+    }
+
+    /* eyelids: blink when idle, close for the answer */
+    .lid {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 51%;
+      z-index: 6;
+      pointer-events: none;
+      transform: scaleY(0);
+      transition: transform 0.32s ease-in;
+    }
+
+    .lid-top {
+      top: 0;
+      transform-origin: 50% 0;
+      background: radial-gradient(circle at 35% 60%, #3a2468, #1c0f38 70%);
+      border-bottom: 2px solid rgba(var(--tone-rgb), 0.35);
+    }
+
+    .lid-bottom {
+      bottom: 0;
+      transform-origin: 50% 100%;
+      background: linear-gradient(180deg, #1c0f38, #140a28);
+    }
+
+    .ball-container:not(.shaking):not(.reveal) .lid {
+      animation: blink 4.6s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 91%, 97%, 100% { transform: scaleY(0); }
+      94% { transform: scaleY(1); }
+    }
+
+    .reveal .lid { transform: scaleY(1); }
+
+    /* maybe: the eye stays half open */
+    .tone-maybe.reveal .lid { transform: scaleY(0.9); }
+    .tone-maybe.reveal .iris { opacity: 0.28; }
+
+    /* ========== STARS ========== */
+    .sky {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .sky i {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 6px #ffffff;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.15; transform: scale(0.6); }
+      50%      { opacity: 1; transform: scale(1); }
+    }
+
+    /* answer */
     #answer-text {
       position: absolute;
       inset: 0;
@@ -264,352 +415,448 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 15%;
-      font-size: clamp(14px, 3.5vw, 18px);
+      padding: 16%;
+      font-size: var(--t-answer);
+      font-size: clamp(17px, 9.5cqw, 30px);
       font-weight: 600;
-      color: #fff;
-      text-shadow: 0 0 8px rgba(180, 100, 255, 0.6), 0 0 20px rgba(123, 47, 255, 0.3);
+      line-height: 1.3;
+      text-wrap: balance;
+      color: var(--text);
+      text-shadow: 0 0 10px rgba(var(--tone-rgb), 0.9), 0 0 26px rgba(var(--tone-rgb), 0.5);
       z-index: 10;
       opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-      line-height: 1.4;
       pointer-events: none;
     }
 
-    /* ========== STATES ========== */
-
-    /* Shaking state */
-    .shaking .crystal-ball {
-      animation: tremble 50ms linear infinite;
-    }
-
-    .shaking .fog-1 {
-      animation: fogSwirl1 1s ease-in-out infinite alternate;
-    }
-
-    .shaking .fog-2 {
-      animation: fogSwirl2 0.8s ease-in-out infinite alternate;
-    }
-
+    /* ========== STATE: shaking ========== */
     .shaking .neon-ring {
-      animation: neonPulse 0.3s ease-in-out infinite alternate;
+      animation: tremble 90ms linear infinite, neonPulse 0.3s ease-in-out infinite alternate;
     }
+
+    .shaking .fog-1 { animation: fogSwirl1 0.9s ease-in-out infinite alternate; }
+    .shaking .fog-2 { animation: fogSwirl2 0.7s ease-in-out infinite alternate; }
+    .shaking .fog-3 { animation: fogSwirl1 0.6s ease-in-out infinite alternate-reverse; }
 
     @keyframes tremble {
       0%   { transform: translate(0, 0) rotate(0deg); }
-      25%  { transform: translate(-2px, 1px) rotate(-0.5deg); }
-      50%  { transform: translate(2px, -1px) rotate(0.5deg); }
-      75%  { transform: translate(-1px, -2px) rotate(-0.5deg); }
-      100% { transform: translate(1px, 2px) rotate(0.5deg); }
+      25%  { transform: translate(-5px, 2px) rotate(-2deg); }
+      50%  { transform: translate(5px, -2px) rotate(2deg); }
+      75%  { transform: translate(-3px, -4px) rotate(-1.5deg); }
+      100% { transform: translate(3px, 4px) rotate(1.5deg); }
     }
 
     @keyframes fogSwirl1 {
-      0%   { transform: translate(-5px, 5px) rotate(0deg) scale(1.1); opacity: 0.2; }
-      100% { transform: translate(5px, -5px) rotate(180deg) scale(0.9); opacity: 0.3; }
+      from { transform: translate(-12%, 12%) rotate(0deg) scale(1.2); }
+      to   { transform: translate(12%, -12%) rotate(200deg) scale(0.9); }
     }
 
     @keyframes fogSwirl2 {
-      0%   { transform: translate(5px, -5px) rotate(0deg) scale(0.9); opacity: 0.15; }
-      100% { transform: translate(-5px, 5px) rotate(-180deg) scale(1.1); opacity: 0.25; }
+      from { transform: translate(12%, -12%) rotate(0deg) scale(0.9); }
+      to   { transform: translate(-12%, 12%) rotate(-200deg) scale(1.2); }
     }
 
     @keyframes neonPulse {
-      0% {
-        box-shadow:
-          0 0 15px rgba(255, 0, 204, 0.3),
-          0 0 30px rgba(255, 0, 204, 0.15),
-          inset 0 0 15px rgba(255, 0, 204, 0.1);
+      from {
+        box-shadow: 0 0 15px rgba(255, 0, 204, 0.3), 0 0 30px rgba(255, 0, 204, 0.15), inset 0 0 15px rgba(255, 0, 204, 0.1);
       }
-      100% {
-        box-shadow:
-          0 0 30px rgba(255, 0, 204, 0.7),
-          0 0 60px rgba(255, 0, 204, 0.4),
-          0 0 90px rgba(255, 0, 204, 0.2),
-          inset 0 0 25px rgba(255, 0, 204, 0.25);
+      to {
+        box-shadow: 0 0 30px rgba(255, 0, 204, 0.75), 0 0 60px rgba(255, 0, 204, 0.4), 0 0 90px rgba(255, 0, 204, 0.2), inset 0 0 25px rgba(255, 0, 204, 0.25);
       }
     }
 
-    /* Reveal state */
-    .reveal .fog-1,
-    .reveal .fog-2 {
-      opacity: 0.03;
-      transition: opacity 0.6s ease-out;
+    /* ========== STATE: reveal, one movement per kind of answer ========== */
+    .reveal .fog { opacity: 0.25; }
+    .reveal #answer-text { opacity: 1; }
+
+    /* yes: rises and lands with confidence */
+    .tone-yes { --tone: var(--cyan); --tone-rgb: 0, 212, 255; }
+    .tone-yes.reveal #answer-text { animation: revealYes 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.25s both; }
+
+    @keyframes revealYes {
+      from { opacity: 0; transform: translateY(28%) scale(0.8); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .reveal #answer-text {
-      opacity: 1;
-      transform: translateY(0);
+    /* no: drops in and shakes its head */
+    .tone-no { --tone: var(--pink); --tone-rgb: 255, 0, 204; }
+    .tone-no.reveal #answer-text { animation: revealNo 0.9s ease-out 0.25s both; }
+
+    @keyframes revealNo {
+      0%   { opacity: 0; transform: translateY(-22%); }
+      35%  { opacity: 1; transform: translateY(0); }
+      50%  { transform: translateX(-7%); }
+      65%  { transform: translateX(7%); }
+      80%  { transform: translateX(-4%); }
+      100% { opacity: 1; transform: translateX(0); }
     }
 
-    /* ========== INSTRUCTION TEXT ========== */
+    /* maybe: comes into focus slowly and the fog never quite clears */
+    .tone-maybe { --tone: var(--violet); --tone-rgb: 155, 92, 255; }
+    .tone-maybe.reveal .fog { opacity: 0.6; }
+    .tone-maybe.reveal #answer-text { animation: revealMaybe 1.6s ease-out 0.25s both, waver 3.5s ease-in-out 1.85s infinite alternate; }
+
+    @keyframes revealMaybe {
+      from { opacity: 0; filter: blur(10px); }
+      to   { opacity: 1; filter: blur(0); }
+    }
+
+    @keyframes waver {
+      from { opacity: 1; filter: blur(0); }
+      to   { opacity: 0.72; filter: blur(0.8px); }
+    }
+
+    /* cheeky: pops in tilted, like a raised eyebrow */
+    .tone-wink { --tone: #ffffff; --tone-rgb: 255, 214, 250; }
+    .tone-wink.reveal #answer-text { animation: revealWink 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.5) 0.25s both; }
+
+    @keyframes revealWink {
+      from { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+      to   { opacity: 1; transform: scale(1) rotate(-2deg); }
+    }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-height: 112px;
+    }
+
     .instruction {
-      margin-top: clamp(20px, 5vh, 40px);
-      font-size: clamp(16px, 4.5vw, 20px);
-      color: #00d4ff;
-      text-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 20px rgba(0, 212, 255, 0.2);
-      text-align: center;
+      font-size: var(--t-body);
       font-weight: 500;
+      color: var(--cyan);
+      text-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 20px rgba(0, 212, 255, 0.2);
     }
 
     .instruction-sub {
+      font-size: var(--t-small);
+      color: var(--muted);
+      line-height: 1.5;
+      min-height: 1.5em;
+    }
+
+    /* ========== BUTTONS: two styles ========== */
+    .btn {
+      background: transparent;
+      font-family: inherit;
+      font-size: var(--t-small);
+      font-weight: 500;
+      padding: 12px 28px;
+      min-height: 44px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: box-shadow 0.3s, transform 0.2s;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 3px;
+    }
+
+    .btn-quiet {
       margin-top: 8px;
-      font-size: clamp(11px, 3vw, 13px);
-      color: #555;
+      border: 1.5px solid rgba(0, 212, 255, 0.5);
+      color: var(--cyan);
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.2), 0 0 20px rgba(0, 212, 255, 0.1);
+    }
+
+    .btn-main {
+      border: 2px solid var(--pink);
+      color: var(--pink);
+      font-size: var(--t-body);
+      box-shadow: 0 0 15px rgba(255, 0, 204, 0.4), 0 0 30px rgba(255, 0, 204, 0.15), inset 0 0 15px rgba(255, 0, 204, 0.1);
+    }
+
+    [hidden] { display: none !important; }
+
+    /* ========== INSTALL GUIDE (iOS) ========== */
+    #install-guide {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(13, 0, 26, 0.96);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 32px;
       text-align: center;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .guide-title {
+      font-size: var(--t-answer);
+      font-weight: 700;
+      color: var(--pink);
+      text-shadow: 0 0 10px rgba(255, 0, 204, 0.7);
+    }
+
+    .guide-steps {
+      list-style: none;
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      font-size: var(--t-body);
+      color: var(--text);
+      text-align: start;
+      max-width: 320px;
+    }
+
+    .guide-steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
       line-height: 1.5;
     }
 
-    /* ========== INSTALL BUTTON ========== */
-    .install-btn {
-      margin-top: clamp(16px, 4vh, 28px);
-      background: transparent;
-      border: 1.5px solid rgba(0, 212, 255, 0.5);
-      color: #00d4ff;
-      font-size: clamp(13px, 3.5vw, 16px);
-      padding: 10px 28px;
-      border-radius: 50px;
-      cursor: pointer;
-      font-family: inherit;
-      box-shadow: 0 0 10px rgba(0, 212, 255, 0.2), 0 0 20px rgba(0, 212, 255, 0.1);
-      transition: box-shadow 0.3s, transform 0.2s;
-      letter-spacing: 0.5px;
+    .guide-steps li::before {
+      content: counter(step);
+      flex: 0 0 auto;
+      color: var(--cyan);
+      font-weight: 700;
     }
 
-    .install-btn:active {
-      transform: scale(0.95);
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(0, 212, 255, 0.2);
-    }
+    .guide-steps strong { color: var(--cyan); font-weight: 600; }
 
-    #no-sensor-hint {
-      display: none;
-      margin-top: 12px;
-      font-size: clamp(11px, 3vw, 13px);
-      color: #666;
-      text-align: center;
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    #no-sensor-hint.visible {
-      display: block;
+    .guide-steps svg {
+      width: 1.1em;
+      height: 1.1em;
+      vertical-align: -0.18em;
+      stroke: var(--cyan);
     }
 
     @keyframes fadeIn {
       from { opacity: 0; }
-      to { opacity: 1; }
+      to   { opacity: 1; }
     }
 
-    /* ========== DECORATIVE ========== */
-    .neon-line {
-      margin-top: clamp(28px, 6vh, 48px);
-      width: min(80%, 280px);
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #ff00cc, #7b2fff, #00d4ff, transparent);
-      box-shadow: 0 0 8px rgba(255, 0, 204, 0.3), 0 0 16px rgba(123, 47, 255, 0.2);
-      border-radius: 1px;
+    /* short screens (landscape phones, small windows) */
+    @media (max-height: 520px) {
+      :root { --ball: min(40vw, 46dvh, 240px); --t-title: 32px; }
+      .subtitle { display: none; }
+      #app { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
+      .footer { min-height: 0; gap: 4px; }
     }
 
-    .dots {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-    }
-
-    .dot:nth-child(1) {
-      background: #ff00cc;
-      box-shadow: 0 0 6px #ff00cc;
-    }
-
-    .dot:nth-child(2) {
-      background: #7b2fff;
-      box-shadow: 0 0 6px #7b2fff;
-    }
-
-    .dot:nth-child(3) {
-      background: #00d4ff;
-      box-shadow: 0 0 6px #00d4ff;
-    }
-
-    /* ========== REDUCED MOTION ========== */
+    /* ========== REDUCED MOTION: fades only ========== */
     @media (prefers-reduced-motion: reduce) {
-      .fog-1, .fog-2 {
+      .title,
+      .ball-container,
+      .neon-ring,
+      .fog,
+      .iris,
+      .lid,
+      .sky i,
+      #install-guide {
         animation: none !important;
       }
 
-      .shaking .crystal-ball {
-        animation: none !important;
-      }
-
-      .shaking .neon-ring {
-        animation: none !important;
-      }
-
-      .title {
-        animation: none !important;
-      }
+      .lid { transition: none; }
 
       .reveal #answer-text {
-        transition: opacity 0.8s ease-out;
-        transform: none;
+        animation: fadeIn 0.6s ease-out both !important;
+        opacity: 1;
+        transform: none !important;
+        filter: none !important;
       }
+
+      .crystal-ball { transition: none; }
     }
   </style>
-<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
-<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 
-  <!-- iOS Permission Screen -->
-  <div id="ios-permission">
-    <div class="title" style="font-size: clamp(36px, 10vw, 52px);">8BALL</div>
-    <button class="permission-btn" id="permission-btn">&#x2728; להתחיל</button>
-    <p class="permission-text">צריך אישור לחיישן התנועה כדי לזהות ניעור</p>
+  <div class="sky" aria-hidden="true">
+    <i style="left:12%;top:26%"></i>
+    <i style="left:86%;top:31%;animation-delay:-1s;background:#00d4ff;box-shadow:0 0 6px #00d4ff"></i>
+    <i style="left:78%;top:72%;animation-delay:-2s;background:#ff00cc;box-shadow:0 0 6px #ff00cc"></i>
+    <i style="left:17%;top:76%;animation-delay:-.5s"></i>
+    <i style="left:52%;top:20%;animation-delay:-1.6s;background:#9b5cff;box-shadow:0 0 6px #9b5cff"></i>
+    <i style="left:92%;top:55%;animation-delay:-2.4s"></i>
   </div>
 
-  <!-- Desktop Fallback -->
-  <div id="desktop-fallback">
-    <div class="title" style="font-size: clamp(36px, 10vw, 52px);">8BALL</div>
-    <p class="desktop-message">הכדור עובד רק בטלפון</p>
-    <div class="qr-placeholder">QR</div>
-    <p class="desktop-sub">סרקו את הקוד או פתחו בטלפון</p>
-  </div>
-
-  <!-- Main App -->
   <div id="app">
-    <div id="idle">
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;">
 
-        <!-- Title -->
-        <h1 class="title">8BALL</h1>
-        <p class="subtitle">לשאול. לנער. לגלות.</p>
+    <header>
+      <h1 class="title">8BALL</h1>
+      <p class="subtitle">לשאול. לנער. לגלות.</p>
+    </header>
 
-        <!-- Crystal Ball -->
-        <div class="ball-container">
-          <div class="neon-ring">
-            <div class="crystal-ball" id="crystal-ball">
-              <div class="fog fog-1"></div>
-              <div class="fog fog-2"></div>
-              <div id="answer-text"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Instruction -->
-        <p class="instruction" id="instruction-text">לנער חזק ולשאול בלב</p>
-        <p class="instruction-sub" id="instruction-sub">חשבו על שאלה ותנו לכדור לענות</p>
-        <p id="no-sensor-hint">אפשר גם פשוט ללחוץ על הכדור</p>
-
-        <!-- Install button -->
-        <button class="install-btn" id="install-btn" style="display:none;">הוסיפו למסך הבית 📲</button>
-
-        <!-- Decorative -->
-        <div class="neon-line"></div>
-        <div class="dots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
+    <main class="stage">
+      <div class="ball-container fresh" id="ball-container">
+        <div class="neon-ring">
+          <button type="button" class="crystal-ball" id="crystal-ball" aria-label="הכדור. לחיצה מביאה תשובה">
+            <span class="fog fog-1"></span>
+            <span class="fog fog-2"></span>
+            <span class="fog fog-3"></span>
+            <span class="eye"><span class="iris"><span class="pupil"></span></span></span>
+            <span class="lid lid-top"></span>
+            <span class="lid lid-bottom"></span>
+            <span id="answer-text" aria-live="polite"></span>
+          </button>
         </div>
       </div>
-    </div>
+    </main>
+
+    <footer class="footer">
+      <p class="instruction" id="instruction-text"></p>
+      <p class="instruction-sub" id="instruction-sub"></p>
+      <button type="button" class="btn btn-quiet" id="install-btn" hidden>להוסיף למסך הבית</button>
+    </footer>
+
+  </div>
+
+  <!-- iOS: how to add to the home screen -->
+  <div id="install-guide" role="dialog" aria-modal="true" aria-labelledby="guide-title" hidden>
+    <p class="guide-title" id="guide-title">להוסיף למסך הבית</p>
+    <ol class="guide-steps">
+      <li><span>ללחוץ על כפתור השיתוף
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>
+        בסרגל של ספארי</span></li>
+      <li><span>לגלול למטה ולבחור <strong>הוסף למסך הבית</strong></span></li>
+      <li><span>ללחוץ על <strong>הוסף</strong></span></li>
+    </ol>
+    <button type="button" class="btn btn-main" id="guide-close">הבנתי</button>
   </div>
 
   <script>
     (function () {
       'use strict';
 
-      // ========== ANSWER POOL ==========
-      const answers = [
-        // Positive (~30%)
-        'כן',
-        'בהחלט כן',
-        'הכוכבים אומרים כן',
-        'בלי שום ספק',
-        'זה הולך לקרות',
-        'אפשר לסמוך על זה',
-        'בדרך אליך',
-        'ללא ספק',
-        'חד משמעית כן',
-        'התשובה חיובית',
-        'סימנים טובים',
-        'יותר כן מלא',
-        'הכל מצביע על כן',
-        'בהחלט',
-        'אני הייתי הולך על זה',
-        // Negative (~20%)
-        'לא',
-        'ממש לא',
-        'לא בחיים האלה',
-        'בגלגול הבא אולי',
-        'תשכחו מזה',
-        'הכוכבים צוחקים',
-        'לא הפעם',
-        'שלילי לגמרי',
-        'אפילו לא שווה לנסות',
-        'חד משמעית לא',
-        // Evasive (~25%)
-        'אולי מחר',
-        'צריך לחשוב שוב',
-        'שאלתם את אמא?',
-        'הרוחות שותקות',
-        'לא עכשיו',
-        'תנערו שוב, לא שמעתי',
-        'הערפל כבד מדי',
-        'לשאול שוב מאוחר יותר',
-        'לא ברור עדיין',
-        'ממממ... לא בטוח',
-        'קשה להגיד',
-        'תחזרו מחר',
-        'יכול להיות שכן ויכול להיות שלא',
-        // Philosophical/Cheeky (~25%)
-        'התשובה כבר ידועה, לא?',
-        'מספיק לשאול. הגיע הזמן לבצע',
-        'התשובה בפנים, לא בכדור',
-        'למה לשאול אותי? תסתכלו במראה',
-        'אם צריך לשאול, כנראה כן',
-        'תפסיקו לשאול ותתחילו לעשות',
-        'שאלה טובה. תשובה? לא בטוח',
-        'הלב יודע. הכדור רק מאשר',
-        'אין תשובות קלות לשאלות טובות',
-        'הכדור לא יודע הכל, אבל יודע את זה',
-        'תנסו ותראו',
-        'מי שלא מנסה לא יודע',
-        'זה תלוי רק בך'
-      ];
+      // ========== ANSWER POOL, grouped by kind ==========
+      // The kind decides the colour and the movement of the answer.
+      const answerGroups = {
+        yes: [
+          'כן',
+          'בהחלט כן',
+          'הכוכבים אומרים כן',
+          'בלי שום ספק',
+          'זה הולך לקרות',
+          'אפשר לסמוך על זה',
+          'בדרך אליך',
+          'ללא ספק',
+          'חד משמעית כן',
+          'התשובה חיובית',
+          'סימנים טובים',
+          'יותר כן מלא',
+          'הכל מצביע על כן',
+          'בהחלט',
+          'אני הייתי הולך על זה'
+        ],
+        no: [
+          'לא',
+          'ממש לא',
+          'לא בחיים האלה',
+          'בגלגול הבא אולי',
+          'תשכחו מזה',
+          'הכוכבים צוחקים',
+          'לא הפעם',
+          'שלילי לגמרי',
+          'אפילו לא שווה לנסות',
+          'חד משמעית לא'
+        ],
+        maybe: [
+          'אולי מחר',
+          'צריך לחשוב שוב',
+          'שאלתם את אמא?',
+          'הרוחות שותקות',
+          'לא עכשיו',
+          'תנערו שוב, לא שמעתי',
+          'הערפל כבד מדי',
+          'לשאול שוב מאוחר יותר',
+          'לא ברור עדיין',
+          'ממממ... לא בטוח',
+          'קשה להגיד',
+          'תחזרו מחר',
+          'יכול להיות שכן ויכול להיות שלא'
+        ],
+        wink: [
+          'התשובה כבר ידועה, לא?',
+          'מספיק לשאול. הגיע הזמן לבצע',
+          'התשובה בפנים, לא בכדור',
+          'למה לשאול אותי? תסתכלו במראה',
+          'אם צריך לשאול, כנראה כן',
+          'תפסיקו לשאול ותתחילו לעשות',
+          'שאלה טובה. תשובה? לא בטוח',
+          'הלב יודע. הכדור רק מאשר',
+          'אין תשובות קלות לשאלות טובות',
+          'הכדור לא יודע הכל, אבל יודע את זה',
+          'תנסו ותראו',
+          'מי שלא מנסה לא יודע',
+          'זה תלוי רק בך'
+        ]
+      };
 
-      // ========== DOM ELEMENTS ==========
-      const appEl = document.getElementById('app');
-      const idleEl = document.getElementById('idle');
-      const iosPermEl = document.getElementById('ios-permission');
-      const desktopEl = document.getElementById('desktop-fallback');
-      const permBtn = document.getElementById('permission-btn');
+      const answers = [];
+      Object.keys(answerGroups).forEach(function (tone) {
+        answerGroups[tone].forEach(function (text) {
+          answers.push({ text: text, tone: tone });
+        });
+      });
+
+      const TONE_CLASSES = ['tone-yes', 'tone-no', 'tone-maybe', 'tone-wink'];
+
+      // ========== COPY ==========
+      // "touch" is a phone or tablet, "mouse" is a computer.
+      const copy = {
+        idleShake:  { main: 'לנער חזק ולשאול בלב',   sub: 'אפשר גם לגעת בכדור' },
+        idleTouch:  { main: 'לגעת בכדור ולשאול בלב', sub: 'חשבו על שאלה ותנו לכדור לענות' },
+        idleMouse:  { main: 'ללחוץ על הכדור ולשאול בלב', sub: 'חשבו על שאלה ותנו לכדור לענות' },
+        againShake: { main: 'לנער שוב לשאלה חדשה',   sub: '' },
+        againTouch: { main: 'לגעת שוב לשאלה חדשה',   sub: '' },
+        againMouse: { main: 'ללחוץ שוב לשאלה חדשה',  sub: '' }
+      };
+
+      // ========== DOM ==========
       const crystalBall = document.getElementById('crystal-ball');
       const answerText = document.getElementById('answer-text');
       const instructionText = document.getElementById('instruction-text');
       const instructionSub = document.getElementById('instruction-sub');
-      const noSensorHint = document.getElementById('no-sensor-hint');
-      const ballContainer = document.querySelector('.ball-container');
+      const ballContainer = document.getElementById('ball-container');
+      const installBtn = document.getElementById('install-btn');
+      const installGuide = document.getElementById('install-guide');
+      const guideClose = document.getElementById('guide-close');
 
       // ========== STATE ==========
+      const isTouch = window.matchMedia('(pointer: coarse)').matches;
+      const needsPermission =
+        typeof DeviceMotionEvent !== 'undefined' &&
+        typeof DeviceMotionEvent.requestPermission === 'function';
+
       let lastAnswerIndex = -1;
       let isShaking = false;
       let cooldown = false;
       let shakeEvents = [];
-      let hasShaken = false;
-      let tapFallbackEnabled = false;
-      let noSensorTimer = null;
+      let hasAnswered = false;
+      let motionOn = false;        // the sensor is listening
+      let permissionAsked = false;
+
+      // ========== INSTRUCTIONS ==========
+      function mode() {
+        if (!isTouch) return 'Mouse';
+        return motionOn ? 'Shake' : 'Touch';
+      }
+
+      function renderInstructions() {
+        const c = copy[(hasAnswered ? 'again' : 'idle') + mode()];
+        instructionText.textContent = c.main;
+        instructionSub.textContent = c.sub;
+      }
 
       // ========== SHAKE DETECTION ==========
       const SHAKE_THRESHOLD = 8;
       const SHAKE_WINDOW = 600;
+      const SHAKE_MS = 1500;
       const COOLDOWN_MS = 2000;
       let lastX = 0, lastY = 0, lastZ = 0;
-      let lastMotionTime = 0;
 
       function handleMotion(event) {
         if (cooldown || isShaking) return;
@@ -625,10 +872,8 @@
 
         let netAccel;
         if (useRaw) {
-          // acceleration already excludes gravity
           netAccel = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
         } else {
-          // Calculate delta from last reading to detect sudden movement
           const deltaX = Math.abs(acc.x - lastX);
           const deltaY = Math.abs(acc.y - lastY);
           const deltaZ = Math.abs(acc.z - lastZ);
@@ -641,54 +886,43 @@
         if (netAccel > SHAKE_THRESHOLD) {
           const now = Date.now();
           shakeEvents.push(now);
-
-          // Keep only events within the window
           shakeEvents = shakeEvents.filter(function (t) {
             return now - t < SHAKE_WINDOW;
           });
 
           if (shakeEvents.length >= 2) {
             shakeEvents = [];
-            hasShaken = true;
             triggerShake();
           }
         }
       }
 
       function startListening() {
+        if (motionOn) return;
+        motionOn = true;
         window.addEventListener('devicemotion', handleMotion, { passive: true });
-
-        // Start no-sensor fallback timer
-        noSensorTimer = setTimeout(function () {
-          if (!hasShaken && !tapFallbackEnabled) {
-            enableTapFallback();
-            noSensorHint.classList.add('visible');
-          }
-        }, 10000);
+        renderInstructions();
       }
 
       // ========== TRIGGER SHAKE ==========
       function triggerShake() {
-        if (isShaking) return;
+        if (isShaking || cooldown) return;
         isShaking = true;
         cooldown = true;
 
-        // Clear any previous reveal
-        ballContainer.classList.remove('reveal');
-        answerText.style.opacity = '0';
-        answerText.style.transform = 'translateY(10px)';
-
-        // Add shaking class
+        ballContainer.classList.remove('reveal', 'fresh');
         ballContainer.classList.add('shaking');
 
-        // After 1.5s, stop shaking and reveal answer
+        if (navigator.vibrate) {
+          try { navigator.vibrate([40, 60, 40]); } catch (e) { /* not allowed, fine */ }
+        }
+
         setTimeout(function () {
           ballContainer.classList.remove('shaking');
           showAnswer();
           isShaking = false;
-        }, 1500);
+        }, SHAKE_MS);
 
-        // Cooldown
         setTimeout(function () {
           cooldown = false;
         }, COOLDOWN_MS);
@@ -702,143 +936,101 @@
         } while (index === lastAnswerIndex && answers.length > 1);
 
         lastAnswerIndex = index;
-        answerText.textContent = answers[index];
+        const answer = answers[index];
 
-        // Remove inline styles so CSS transition takes effect
-        answerText.style.opacity = '';
-        answerText.style.transform = '';
+        TONE_CLASSES.forEach(function (c) { ballContainer.classList.remove(c); });
+        ballContainer.classList.add('tone-' + answer.tone);
+        answerText.textContent = answer.text;
 
-        // Trigger reveal
-        requestAnimationFrame(function () {
-          ballContainer.classList.add('reveal');
-        });
+        // restart the reveal animation
+        void ballContainer.offsetWidth;
+        ballContainer.classList.add('reveal');
 
-        // Update instruction text
-        instructionText.textContent = 'לנער שוב לשאלה חדשה';
-        instructionSub.textContent = '';
+        hasAnswered = true;
+        renderInstructions();
       }
 
-      // ========== TAP FALLBACK ==========
-      function enableTapFallback() {
-        if (tapFallbackEnabled) return;
-        tapFallbackEnabled = true;
-
-        crystalBall.addEventListener('click', function () {
-          if (!isShaking && !cooldown) {
-            triggerShake();
-          }
-        });
-      }
-
-      // ========== iOS PERMISSION ==========
-      function handleiOSPermission() {
-        if (typeof DeviceMotionEvent !== 'undefined' &&
-            typeof DeviceMotionEvent.requestPermission === 'function') {
-          // iOS 13+ — need permission
-          iosPermEl.classList.add('visible');
-          appEl.classList.add('hidden');
-
-          permBtn.addEventListener('click', function () {
-            DeviceMotionEvent.requestPermission().then(function (state) {
-              if (state === 'granted') {
-                iosPermEl.classList.remove('visible');
-                appEl.classList.remove('hidden');
-                startListening();
-              } else {
-                // Permission denied — show app with tap fallback
-                iosPermEl.classList.remove('visible');
-                appEl.classList.remove('hidden');
-                enableTapFallback();
-                noSensorHint.classList.add('visible');
-                noSensorHint.textContent = 'אין גישה לחיישן? לחצו על הכדור';
-              }
-            }).catch(function () {
-              // Error — fallback to tap
-              iosPermEl.classList.remove('visible');
-              appEl.classList.remove('hidden');
-              enableTapFallback();
-              noSensorHint.classList.add('visible');
-              noSensorHint.textContent = 'אין גישה לחיישן? לחצו על הכדור';
-            });
-          });
-        } else if (typeof DeviceMotionEvent === 'undefined') {
-          // No DeviceMotionEvent at all — desktop
-          appEl.classList.add('hidden');
-          desktopEl.classList.add('visible');
-        } else {
-          // Android or older iOS — no permission needed
-          startListening();
-          // Also enable tap fallback just in case
-          enableTapFallback();
+      // ========== THE BALL IS ALWAYS A BUTTON ==========
+      // The first press also asks for the motion sensor where the browser
+      // wants a user gesture for that (iPhone). No separate permission screen.
+      crystalBall.addEventListener('click', function () {
+        if (needsPermission && !permissionAsked) {
+          permissionAsked = true;
+          DeviceMotionEvent.requestPermission()
+            .then(function (state) {
+              if (state === 'granted') startListening();
+            })
+            .catch(function () { /* stays a tap-only ball */ })
+            .then(triggerShake);
+          return;
         }
-      }
+        triggerShake();
+      });
 
-      // ========== INSTALL PROMPT ==========
-      const installBtn = document.getElementById('install-btn');
+      // ========== INSTALL ==========
       let deferredPrompt = null;
 
-      // Android / Chrome — intercept beforeinstallprompt
-      window.addEventListener('beforeinstallprompt', function (e) {
-        e.preventDefault();
-        deferredPrompt = e;
-        installBtn.style.display = 'inline-block';
-      });
-
-      installBtn.addEventListener('click', function () {
-        if (deferredPrompt) {
-          // Android/Chrome native install
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then(function () {
-            deferredPrompt = null;
-            installBtn.style.display = 'none';
-          });
-        } else {
-          // iOS — show manual instructions
-          showIOSInstallGuide();
-        }
-      });
-
-      function showIOSInstallGuide() {
-        var overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(13,0,26,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;padding:2rem;';
-        overlay.innerHTML =
-          '<p style="font-size:20px;color:#ff00cc;text-shadow:0 0 10px #ff00cc;">הוסיפו למסך הבית</p>' +
-          '<p style="font-size:15px;color:#ccc;text-align:center;line-height:1.8;">' +
-          '1. לחצו על כפתור השיתוף <span style="font-size:20px;">⬆️</span><br>' +
-          '2. גללו למטה ובחרו<br><strong style="color:#00d4ff;">Add to Home Screen</strong><br>' +
-          '3. לחצו <strong style="color:#00d4ff;">Add</strong></p>' +
-          '<button style="margin-top:12px;background:transparent;border:1.5px solid #ff00cc;color:#ff00cc;padding:10px 32px;border-radius:50px;font-size:15px;cursor:pointer;font-family:inherit;" onclick="this.parentElement.remove()">הבנתי 👍</button>';
-        document.body.appendChild(overlay);
-      }
-
-      // iOS — detect standalone mode. If not installed, show install button
       function isIOS() {
         return /iPhone|iPad|iPod/.test(navigator.userAgent);
       }
 
       function isStandalone() {
-        return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+        return window.navigator.standalone === true ||
+          window.matchMedia('(display-mode: standalone)').matches;
       }
+
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.hidden = false;
+      });
+
+      installBtn.addEventListener('click', function () {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () {
+            deferredPrompt = null;
+            installBtn.hidden = true;
+          });
+        } else {
+          installGuide.hidden = false;
+          guideClose.focus();
+        }
+      });
+
+      function closeGuide() {
+        installGuide.hidden = true;
+        installBtn.focus();
+      }
+
+      guideClose.addEventListener('click', closeGuide);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !installGuide.hidden) closeGuide();
+      });
 
       if (isIOS() && !isStandalone()) {
-        installBtn.style.display = 'inline-block';
+        installBtn.hidden = false;
       }
 
-      // Hide after install
       window.addEventListener('appinstalled', function () {
-        installBtn.style.display = 'none';
+        installBtn.hidden = true;
       });
 
       // ========== INIT ==========
-      handleiOSPermission();
+      if (!needsPermission && typeof DeviceMotionEvent !== 'undefined' && isTouch) {
+        startListening();
+      }
+      renderInstructions();
 
       // ========== SERVICE WORKER ==========
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(function () {
-          // SW registration failed — app still works
+          // SW registration failed, the app still works
         });
       }
     })();
   </script>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
